@@ -16,7 +16,7 @@ export async function fetchArticles(
       category: encodeURIComponent(category),
       from: since,
       sortBy: "publishedAt",
-      apiKey: process.env.N,
+      apiKey: process.env.NEWS_API_KEY,
     };
     const url = "https://newsapi.org/v2/everything";
 
