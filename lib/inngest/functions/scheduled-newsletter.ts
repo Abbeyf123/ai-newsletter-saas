@@ -3,6 +3,7 @@ import { fetchArticles } from "@/lib/news";
 
 export default inngest.createFunction(
   { id: "newsletter/scheduled", triggers: { event: "newsletter.schedule" } },
+  
   async ({ event, step, runId }) => {
     const categories = ["technology", "business", "politics"];
     //fetch articles per category
@@ -53,5 +54,6 @@ export default inngest.createFunction(
     });
 
     console.log(summary)
+    return {}
   },
 );

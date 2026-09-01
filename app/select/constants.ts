@@ -1,72 +1,76 @@
-import { Cpu, FlaskConical, HeartPulse, Leaf,Trophy, BriefcaseBusiness,
+import {
+  BrainCircuit,
+  BriefcaseBusiness,
+  Clapperboard,
+  FlaskConical,
+  HeartPulse,
+  Landmark,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 
-  Clapperboard, Newspaper } from "lucide-react";
+export type DeliveryFrequency = "daily" | "weekly" | "biweekly";
 
-export const categories = [
+export type CategoryOption = {
+  id: string;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+export const CATEGORIES: CategoryOption[] = [
   {
-    id: "technology",
-    name: "Technology",
-    description: "Latest tech news and innovations",
-    icon: Cpu,
+    id: "ai",
+    name: "AI",
+    description: "Latest news and updates in artificial intelligence",
+    icon: BrainCircuit,
   },
   {
     id: "business",
     name: "Business",
-    description: "Business trends and market updates",
+    description: "Insights and trends in the business world",
     icon: BriefcaseBusiness,
-  },
-  {
-    id: "sports",
-    name: "Sports",
-    description: "Sports news and highlights",
-    icon: Trophy,
   },
   {
     id: "entertainment",
     name: "Entertainment",
-    description: "Movies, TV, and celebrity news",
+    description: "Updates on movies, music, and celebrity news",
     icon: Clapperboard,
-  },
-  {
-    id: "science",
-    name: "Science",
-    description: "Scientific discoveries and research",
-    icon: FlaskConical,
   },
   {
     id: "health",
     name: "Health",
-    description: "Health and wellness updates",
+    description: "Information on health, wellness, and medical research",
     icon: HeartPulse,
+  },
+  {
+    id: "science",
+    name: "Science",
+    description: "Discoveries and advancements in science and technology",
+    icon: FlaskConical,
+  },
+  {
+    id: "sports",
+    name: "Sports",
+    description: "Scores, news, and updates from the world of sports",
+    icon: Trophy,
   },
   {
     id: "politics",
     name: "Politics",
-    description: "Political news and current events",
-    icon: Newspaper,
-  },
-  {
-    id: "environment",
-    name: "Environment",
-    description: "Climate and environmental news",
-    icon: Leaf,
+    description: "Political news, analysis, and commentary",
+    icon: Landmark,
   },
 ];
 
-export const frequencyOptions = [
-  {
-    id: "daily",
-    name: "Daily",
-    description: "Receive a newsletter every day",
-  },
-  {
-    id: "weekly",
-    name: "Weekly",
-    description: "One newsletter every week",
-  },
-  {
-    id: "biweekly",
-    name: "Biweekly",
-    description: "Receive updates twice a week",
-  },
+export type FrequencyOption = {
+  id: DeliveryFrequency;
+  name: string;
+  description: string;
+};
+
+export const FREQUENCYOPTIONS: FrequencyOption[] = [
+  { id: "daily", name: "Daily", description: "Every day" },
+  { id: "weekly", name: "Weekly", description: "Once a week" },
+  { id: "biweekly", name: "Bi-weekly", description: "Once a month" },
 ];

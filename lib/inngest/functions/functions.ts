@@ -1,4 +1,4 @@
 // src/inngest/functions.ts
-// import { inngest } from "../client";
+import scheduledNewsletterFunction from "./scheduled-newsletter"
 
-export const functions = []
+export const functions = [scheduledNewsletterFunction]
