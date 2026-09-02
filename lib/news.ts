@@ -6,36 +6,44 @@ interface NewsArticle {
   description: string;
 }
 
+
+const NEWS_API_KEY = process.env.NEWS_API_KEY
 export async function fetchArticles(
   categories: string[],
 ): Promise<Array<NewsArticle>> {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+ const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const promises = categories.map(async (category) => {
-    const params = {
-      category: encodeURIComponent(category),
-      from: since,
-      sortBy: "publishedAt",
-      apiKey: process.env.NEWS_API_KEY,
-    };
-    const url = "https://newsapi.org/v2/everything";
+const promises = categories.map(async (category) => {
+  const url = "https://newsapi.org/v2/everything";
 
-    try {
-      const response = await axios.get(url, { params });
-      const data = await response.data
+  const params = {
+    q: category,            // Everything endpoint requires `q` (query keywords) instead of `category`
+    from: since,            // Supported on /v2/everything
+    sortBy: "publishedAt",  // Supported on /v2/everything
+    pageSize: 5,            // Fetches only 5 results directly from the API
+    language: "en"          // Recommended to avoid unexpected non-English results
+  };
 
-      return data.articles.slice(0,5).map((article:NewsArticle ) => ({
-        title: article.title || '',
-        url: article.url || '',
-        description: article.description || 'No description available'
-      }))
+  try {
+    const response = await axios.get(url, {
+      params,               // Axios automatically URL-encodes params
+      headers: {
+        'X-Api-Key': NEWS_API_KEY
+      }
+    });
 
-    } catch (error) {
-        console.error('error fetching news', error)
-        return []
-    }
-  });
+    // response.data is already parsed by Axios, no 'await' needed
+    return response.data.articles.map((article: NewsArticle) => ({
+      title: article.title || "",
+      url: article.url || "",
+      description: article.description || "No description available",
+    }));
+  } catch (error) {
+    console.error(`Error fetching news for query "${category}":`, error);
+    return [];
+  }
+});
 
-  const results = await Promise.all(promises)
-  return results.flat()
+  const results = await Promise.all(promises);
+  return results.flat();
 }

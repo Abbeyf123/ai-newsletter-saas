@@ -13,6 +13,7 @@ export default async function SelectPage() {
     redirect("/login");
   }
   const userPreferences = await fetchUserPreferences({ userId: user.sub });
+ 
 
   return (
     <SelectPageClient userPreferences={userPreferences as UserPreferences} />
