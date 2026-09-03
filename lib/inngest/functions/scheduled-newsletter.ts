@@ -15,7 +15,7 @@ export default inngest.createFunction(
 
     const summary = await step.ai.infer("summarize-news", {
       model: step.ai.models.gemini({
-        model: "gemini-2.5-flash",
+        model: "ggemini-3.6-flash",
       }),
       body: {
         contents: [
