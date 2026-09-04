@@ -1,0 +1,47 @@
+import { Resend } from "resend";
+
+import type { NewsletterContent } from "@/types/newsletter";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendNewsletterEmail({
+  email,
+  newsletter,
+}: {
+  email: string;
+  newsletter: NewsletterContent;
+}) {
+  "use server";
+
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured.");
+  }
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+      <h1 style="margin-bottom: 8px;">${newsletter.title}</h1>
+      <p style="margin-bottom: 16px;"><strong>Subject:</strong> ${newsletter.subject}</p>
+      <p style="margin-bottom: 16px;">${newsletter.introduction}</p>
+      ${newsletter.stories
+        .map(
+          (story) => `
+            <div style="margin-bottom: 20px; border-left: 4px solid #2563eb; padding-left: 12px;">
+              <h2 style="margin: 0 0 8px; font-size: 18px;">${story.title}</h2>
+              <p style="margin: 0 0 8px;"><strong>${story.category}</strong> · ${story.source}</p>
+              <p style="margin: 0 0 8px;">${story.summary}</p>
+              <a href="${story.url}" style="color: #2563eb;">Read more</a>
+            </div>
+          `,
+        )
+        .join("")}
+      <p style="margin-top: 16px;">${newsletter.closing}</p>
+    </div>
+  `;
+
+  return resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: email,
+    subject: newsletter.subject,
+    html,
+  });
+}

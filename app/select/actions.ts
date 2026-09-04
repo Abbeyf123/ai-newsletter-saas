@@ -53,6 +53,11 @@ export async function savePreferences({ categories, frequency }: Preferences) {
   }
   const {} = await inngest.send({
     name: "newsletter.schedule",
+    data: {
+      email: email,
+      categories: categories,
+      frequency: frequency,
+    }
   });
 
   revalidatePath("/dashboard");
