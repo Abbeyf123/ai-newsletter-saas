@@ -1,3 +1,4 @@
+import { sendNewsletterEmail } from "@/lib/email";
 import { inngest } from "../client";
 import { fetchArticles } from "@/lib/news";
 
@@ -5,17 +6,17 @@ export default inngest.createFunction(
   { id: "newsletter/scheduled", triggers: { event: "newsletter.schedule" } },
   
   async ({ event, step, runId }) => {
-    const categories = ["technology", "business", "politics"];
+    const categories = event.data.categories;
     //fetch articles per category
-    const allArticles = await step.run("fetch-news", () => {
-      return fetchArticles(categories);
+    const allArticles = await step.run("fetch-news", async () => {
+      return await fetchArticles(categories);
     });
 
     //generate AI summary
 
     const summary = await step.ai.infer("summarize-news", {
       model: step.ai.models.gemini({
-        model: "ggemini-3.6-flash",
+        model: "gemini-3.6-flash",
       }),
       body: {
         contents: [
@@ -53,6 +54,11 @@ export default inngest.createFunction(
       },
     });
 
+
+    await step.run('send-newletter-email', async () => {
+      const email = event.data.email
+      await sendNewsletterEmail({email})
+    })
     console.log(summary)
     return {
       
