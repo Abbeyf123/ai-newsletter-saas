@@ -19,201 +19,162 @@ export default inngest.createFunction(
   async ({ event, step, runId }) => {
     const { categories, email } = event.data;
 
-    /**
-     * STEP 1
-     * Fetch articles.
-     */
-    const allArticles = await step.run(
-      "fetch-news",
-      async () => {
-        return fetchArticles(categories);
-      },
-    );
+    //  STEP 1 Fetch articles
+
+    const allArticles = await step.run("fetch-news", async () => {
+      return fetchArticles(categories);
+    });
 
     if (allArticles.length === 0) {
-      throw new Error(
-        "No articles were found for the selected categories.",
-      );
+      throw new Error("No articles were found for the selected categories.");
     }
 
-    /**
-     * STEP 2
-     * Remove duplicate URLs.
-     */
+    //  STEP 2 Remove duplicate URLs.
+
     const uniqueArticles = Array.from(
       new Map(
-        allArticles.map((article:NewsArticle) => [
-          article.url,
-          article,
-        ]),
+        allArticles.map((article: NewsArticle) => [article.url, article]),
       ).values(),
     );
 
-    /**
+    /*
      * STEP 3
      * Ask Gemini to select and summarize
      * the strongest stories.
      */
-    const aiResponse = await step.ai.infer(
-      "summarize-news",
-      {
-        model: step.ai.models.gemini({
-          model: "gemini-3.6-flash",
-        }),
+    const aiResponse = await step.ai.infer("summarize-news", {
+      model: step.ai.models.gemini({
+        model: "gemini-3.6-flash",
+      }),
 
-        body: {
-          contents: [
-            {
-              role: "user",
+      body: {
+        contents: [
+          {
+            role: "user",
 
-              parts: [
-                {
-                  text: buildNewsletterPrompt({
-                    categories,
-                    articles: uniqueArticles,
-                  }),
-                },
-              ],
-            },
-          ],
+            parts: [
+              {
+                text: buildNewsletterPrompt({
+                  categories,
+                  articles: uniqueArticles,
+                }),
+              },
+            ],
+          },
+        ],
 
-          generationConfig: {
-            temperature: 0.3,
+        generationConfig: {
+          temperature: 0.3,
 
-            responseMimeType: "application/json",
+          responseMimeType: "application/json",
 
-            responseSchema: {
-              type: "object",
+          responseSchema: {
+            type: "object",
 
-              properties: {
-                subject: {
-                  type: "string",
-                },
+            properties: {
+              subject: {
+                type: "string",
+              },
 
-                previewText: {
-                  type: "string",
-                },
+              previewText: {
+                type: "string",
+              },
 
-                title: {
-                  type: "string",
-                },
+              title: {
+                type: "string",
+              },
 
-                introduction: {
-                  type: "string",
-                },
+              introduction: {
+                type: "string",
+              },
 
-                stories: {
-                  type: "array",
+              stories: {
+                type: "array",
 
-                  items: {
-                    type: "object",
+                items: {
+                  type: "object",
 
-                    properties: {
-                      title: {
-                        type: "string",
-                      },
-
-                      category: {
-                        type: "string",
-                      },
-
-                      summary: {
-                        type: "string",
-                      },
-
-                      source: {
-                        type: "string",
-                      },
-
-                      url: {
-                        type: "string",
-                      },
+                  properties: {
+                    title: {
+                      type: "string",
                     },
 
-                    required: [
-                      "title",
-                      "category",
-                      "summary",
-                      "source",
-                      "url",
-                    ],
-                  },
-                },
+                    category: {
+                      type: "string",
+                    },
 
-                closing: {
-                  type: "string",
+                    summary: {
+                      type: "string",
+                    },
+
+                    source: {
+                      type: "string",
+                    },
+
+                    url: {
+                      type: "string",
+                    },
+                  },
+
+                  required: ["title", "category", "summary", "source", "url"],
                 },
               },
 
-              required: [
-                "subject",
-                "previewText",
-                "title",
-                "introduction",
-                "stories",
-                "closing",
-              ],
+              closing: {
+                type: "string",
+              },
             },
+
+            required: [
+              "subject",
+              "previewText",
+              "title",
+              "introduction",
+              "stories",
+              "closing",
+            ],
           },
         },
       },
-    );
+    });
 
-    /**
-     * STEP 4
-     * Extract and parse Gemini's JSON.
-     */
+    // STEP 4 Extract and parse Gemini's JSON.
+     
     const newsletter = await step.run(
       "parse-newsletter",
       async (): Promise<NewsletterContent> => {
-        const parts =
-          aiResponse.candidates?.[0]?.content?.parts;
+        const parts = aiResponse.candidates?.[0]?.content?.parts;
 
         if (!parts?.length) {
-          throw new Error(
-            "Gemini returned an empty response.",
-          );
+          throw new Error("Gemini returned an empty response.");
         }
 
         const textPart = parts.find(
-          (
-            part,
-          ): part is { text: string } =>
-            "text" in part &&
-            typeof part.text === "string",
+          (part): part is { text: string } =>
+            "text" in part && typeof part.text === "string",
         );
 
         const text = textPart?.text;
 
         if (!text) {
-          throw new Error(
-            "Gemini response did not contain text.",
-          );
+          throw new Error("Gemini response did not contain text.");
         }
 
         try {
           return JSON.parse(text) as NewsletterContent;
         } catch {
-          throw new Error(
-            "Gemini returned invalid JSON.",
-          );
+          throw new Error("Gemini returned invalid JSON.");
         }
       },
     );
 
-    /**
-     * STEP 5
-     * Send through Resend.
-     */
-    const emailResult = await step.run(
-      "send-newsletter-email",
-      async () => {
-        return sendNewsletterEmail({
-          email,
-          newsletter,
-        });
-      },
-    );
+    //  STEP 5 Send through Resend.
+    const emailResult = await step.run("send-newsletter-email", async () => {
+      return sendNewsletterEmail({
+        email,
+        newsletter,
+      });
+    });
 
     return {
       success: true,

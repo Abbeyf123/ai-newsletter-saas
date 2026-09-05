@@ -40,17 +40,21 @@ export default function SelectPageClient({
 }: {
   userPreferences: UserPreferences | null;
 }) {
-    const preferences = {
-     
-      categories: [],
-      frequency: DEFAULT_FREQUENCY,
-      is_active: true,
-    }
+  const preferences = {
+    categories: [],
+    frequency: DEFAULT_FREQUENCY,
+    is_active: true,
+  };
   const router = useRouter();
 
-  const { frequency, is_active, categories: userCategoryIds } = userPreferences ? userPreferences : preferences;
+  const {
+    frequency,
+    categories: userCategoryIds,
+  } = userPreferences ? userPreferences : preferences;
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    userCategoryIds ?? [],
+  );
   const [selectedFrequency, setSelectedFrequency] =
     useState<DeliveryFrequency>(DEFAULT_FREQUENCY);
 

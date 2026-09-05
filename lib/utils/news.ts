@@ -32,7 +32,7 @@ export async function fetchArticles(
             q: category,
             from: since,
             sortBy: "publishedAt",
-            pageSize: 5,
+            pageSize: 10,
             language: "en",
           },
           headers: {

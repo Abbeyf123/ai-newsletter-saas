@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { DeliveryFrequency } from "./constants";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { inngest } from "@/lib/inngest/client";
 interface Preferences {
   categories?: string[];
@@ -51,16 +51,17 @@ export async function savePreferences({ categories, frequency }: Preferences) {
   if (error) {
     throw new Error(error.message);
   }
-  const {} = await inngest.send({
-    name: "newsletter.schedule",
-    data: {
-      email: email,
-      categories: categories,
-      frequency: frequency,
-    }
-  });
-
+  // const {} = await inngest.send({
+  //   name: "newsletter.schedule",
+  //   data: {
+  //     email: email,
+  //     categories: categories,
+  //     frequency: frequency,
+  //   }
+  // });
+  updateTag(`user-preferences-${user.sub}`);
   revalidatePath("/dashboard");
+
   return {
     sucesss: true,
     message: "Preferences saved successfully",
