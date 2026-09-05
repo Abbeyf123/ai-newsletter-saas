@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { DeliveryFrequency } from "./constants";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag,  } from "next/cache";
 import { inngest } from "@/lib/inngest/client";
 interface Preferences {
   categories?: string[];
@@ -60,7 +60,6 @@ export async function savePreferences({ categories, frequency }: Preferences) {
   //   }
   // });
   updateTag(`user-preferences-${user.sub}`);
-  revalidatePath("/dashboard");
 
   return {
     sucesss: true,

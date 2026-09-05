@@ -47,10 +47,9 @@ export default function SelectPageClient({
   };
   const router = useRouter();
 
-  const {
-    frequency,
-    categories: userCategoryIds,
-  } = userPreferences ? userPreferences : preferences;
+  const { frequency, categories: userCategoryIds } = userPreferences
+    ? userPreferences
+    : preferences;
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     userCategoryIds ?? [],
@@ -126,7 +125,7 @@ export default function SelectPageClient({
       setSavedCategories([...selectedCategories]);
       setSavedFrequency(selectedFrequency);
       setHasExistingPreferences(true);
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
       router.refresh();
     } catch (error) {
       console.error("Error saving preferences:", error);

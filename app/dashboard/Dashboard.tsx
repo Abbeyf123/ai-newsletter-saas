@@ -49,7 +49,7 @@ export default function DashboardPage({
   const [preferences, setPreferences] = useState<UserPreferences | null>(
     usePreferences,
   );
-  const [loading, setIsLoading] = useState(false);
+  // const [loading, setIsLoading] = useState(false);
 
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
