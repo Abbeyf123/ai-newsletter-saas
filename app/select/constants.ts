@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type DeliveryFrequency = "daily" | "weekly" | "biweekly";
+export type DeliveryFrequency = "weekly" | "biweekly" | "monthly" ;
 
 export type CategoryOption = {
   id: string;
@@ -69,8 +69,8 @@ export type FrequencyOption = {
   description: string;
 };
 
-export const FREQUENCYOPTIONS: FrequencyOption[] = [
-  { id: "daily", name: "Daily", description: "Every day" },
-  { id: "weekly", name: "Weekly", description: "Once a week" },
-  { id: "biweekly", name: "Bi-weekly", description: "Once a month" },
+export const frequencyOptions: FrequencyOption[] = [
+  { id: "weekly" , name: "weekly", description: "Every week" },
+  { id: "biweekly" , name: "Bi-weekly", description: "twice a week" },
+  { id: "monthly" , name: "monthly", description: "Once a month" },
 ];

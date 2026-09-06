@@ -29,6 +29,13 @@ export const fetchUserPreferences = async ({
     },
   );
 
+
+
+
+
+
+
+  
   const { data: userPreferences, error } = await supabase
     .from("user_preferences")
     .select("*")

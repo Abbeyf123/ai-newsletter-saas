@@ -6,6 +6,7 @@ import type { NewsletterContent } from "@/types/newsletter";
 
 import { inngest } from "../client";
 import { NewsArticle } from "@/lib/utils/news";
+import { createClient } from "@/lib/supabase/server";
 
 export default inngest.createFunction(
   {
@@ -14,10 +15,35 @@ export default inngest.createFunction(
     triggers: {
       event: "newsletter.schedule",
     },
+    cancelOn: [
+      {
+        event: "newsletter.schedule.deleted",
+        if: "async.data.userId === event.data.userId",
+      },
+    ],
   },
 
   async ({ event, step, runId }) => {
-    const { categories, email } = event.data;
+    const { categories, email, frequency, userId } = event.data;
+
+    const isUserActive = await step.run("check-user-status", async () => {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("is_active")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        return false;
+      }
+
+      return data.is_active || false;
+    });
+
+    if (!isUserActive) {
+      return {};
+    }
 
     //  STEP 1 Fetch articles
 
@@ -139,7 +165,7 @@ export default inngest.createFunction(
     });
 
     // STEP 4 Extract and parse Gemini's JSON.
-     
+
     const newsletter = await step.run(
       "parse-newsletter",
       async (): Promise<NewsletterContent> => {
@@ -176,13 +202,46 @@ export default inngest.createFunction(
       });
     });
 
-    return {
-      success: true,
-      runId,
-      email,
-      emailId: emailResult?.data?.id ?? null,
-      articleCount: allArticles.length,
-      selectedStoryCount: newsletter.stories.length,
-    };
+    // schedule the next newsletter based on the user's frequency preference
+    await step.run("schedule-next", async () => {
+      const now = new Date();
+      let nextScheduleTime: Date;
+
+      switch (frequency) {
+        case "weekly":
+          nextScheduleTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week
+          break;
+        case "biweekly":
+          nextScheduleTime = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+          break;
+        case "monthly":
+          nextScheduleTime = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 1 month
+          break;
+        default:
+          nextScheduleTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week
+      }
+
+      nextScheduleTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+
+      await inngest.send({
+        name: "newsletter.schedule",
+        data: {
+          categories,
+          email,
+          frequency,
+          userId,
+        },
+        ts: nextScheduleTime.getTime(),
+      });
+
+      return {
+        success: true,
+        runId,
+        email,
+        emailId: emailResult?.data?.id ?? null,
+        articleCount: allArticles.length,
+        selectedStoryCount: newsletter.stories.length,
+      };
+    });
   },
 );

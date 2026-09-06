@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
+
 
 import {
   CalendarDays,
@@ -19,8 +19,6 @@ import {
   Tag,
 } from "lucide-react";
 
-import { useAuthContext } from "@/context/AuthContext";
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +30,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { newsletterActivation } from "./actions";
+import { useRouter } from "next/navigation";
 
 interface UserPreferences {
   categories: string[];
@@ -40,50 +40,23 @@ interface UserPreferences {
   is_active: boolean;
   created_at: string;
 }
-
+ 
 export default function DashboardPage({
-  usePreferences,
+  userPreferences: preferences,
 }: {
-  usePreferences: UserPreferences | null;
+  userPreferences: UserPreferences | null;
 }) {
-  const [preferences, setPreferences] = useState<UserPreferences | null>(
-    usePreferences,
-  );
   // const [loading, setIsLoading] = useState(false);
 
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  // const router = useRouter();
-  const { user } = useAuthContext();
+  const router = useRouter();
 
   const handleDeactivateNewsletter = async () => {
-    if (!user || !preferences) return;
-
     setIsUpdatingStatus(true);
 
     try {
-      const response = await fetch("/api/user-preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          is_active: false,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to pause newsletter");
-      }
-
-      setPreferences((previous) =>
-        previous
-          ? {
-              ...previous,
-              is_active: false,
-            }
-          : null,
-      );
+      await newsletterActivation(false);
+      router.refresh();
     } catch (error) {
       console.error("Error deactivating newsletter:", error);
       alert("Failed to pause newsletter. Please try again.");
@@ -93,36 +66,14 @@ export default function DashboardPage({
   };
 
   const handleActivateNewsletter = async () => {
-    if (!user || !preferences) return;
-
     setIsUpdatingStatus(true);
 
     try {
-      const response = await fetch("/api/user-preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          is_active: true,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to resume newsletter");
-      }
-
-      setPreferences((previous) =>
-        previous
-          ? {
-              ...previous,
-              is_active: true,
-            }
-          : null,
-      );
+      await newsletterActivation(true);
+      router.refresh();
     } catch (error) {
       console.error("Error activating newsletter:", error);
-      alert("Failed to resume newsletter. Please try again.");
+      alert("Failed to activate newsletter. Please try again.");
     } finally {
       setIsUpdatingStatus(false);
     }

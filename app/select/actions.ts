@@ -2,20 +2,31 @@
 import { redirect } from "next/navigation";
 import { DeliveryFrequency } from "./constants";
 import { createClient } from "@/lib/supabase/server";
-import { updateTag,  } from "next/cache";
+import { updateTag } from "next/cache";
 import { inngest } from "@/lib/inngest/client";
 interface Preferences {
   categories?: string[];
   frequency?: DeliveryFrequency;
 }
 
-const frequencyOptions: DeliveryFrequency[] = ["daily", "weekly", "biweekly"];
+const frequencyOptions: DeliveryFrequency[] = ["monthly", "weekly", "biweekly"];
 export async function savePreferences({ categories, frequency }: Preferences) {
   const supabase = await createClient();
 
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
-  const email = user?.email;
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw new Error("user not found");
+  }
+
+  if (!user?.id || !user?.email) {
+    redirect("/auth/login");
+  }
+
+  const email = user.email;
 
   if (!user) {
     redirect("/login");
@@ -39,7 +50,7 @@ export async function savePreferences({ categories, frequency }: Preferences) {
 
   const { error } = await supabase.from("user_preferences").upsert(
     {
-      user_id: user.sub,
+      user_id: user.id,
       email: email,
       categories: categories,
       frequency: frequency,
@@ -51,15 +62,16 @@ export async function savePreferences({ categories, frequency }: Preferences) {
   if (error) {
     throw new Error(error.message);
   }
-  // const {} = await inngest.send({
-  //   name: "newsletter.schedule",
-  //   data: {
-  //     email: email,
-  //     categories: categories,
-  //     frequency: frequency,
-  //   }
-  // });
-  updateTag(`user-preferences-${user.sub}`);
+   await inngest.send({
+    name: "newsletter.schedule",
+    data: {
+      email: email,
+      categories: categories,
+      frequency: frequency,
+      userId: user.id
+    }
+  });
+  updateTag(`user-preferences-${user.id}`);
 
   return {
     sucesss: true,

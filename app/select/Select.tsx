@@ -13,7 +13,7 @@ import {
   Save,
 } from "lucide-react";
 import { savePreferences } from "./actions";
-import { CATEGORIES, FREQUENCYOPTIONS, DeliveryFrequency } from "./constants";
+import { CATEGORIES, frequencyOptions, DeliveryFrequency } from "./constants";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -55,7 +55,7 @@ export default function SelectPageClient({
     userCategoryIds ?? [],
   );
   const [selectedFrequency, setSelectedFrequency] =
-    useState<DeliveryFrequency>(DEFAULT_FREQUENCY);
+    useState<DeliveryFrequency>(frequency ?? DEFAULT_FREQUENCY);
 
   const [savedCategories, setSavedCategories] = useState<string[]>(
     userCategoryIds ?? [],
@@ -409,7 +409,7 @@ export default function SelectPageClient({
                     </legend>
 
                     <div className="grid gap-3 md:grid-cols-3">
-                      {FREQUENCYOPTIONS.map((frequency) => {
+                      {frequencyOptions.map((frequency) => {
                         const isSelected = selectedFrequency === frequency.id;
 
                         const wasPreviouslySaved =

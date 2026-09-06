@@ -19,5 +19,5 @@ export default async function DashboardPage() {
     userId: user.sub,
     cookies: authCookies,
   });
-  return <Dashboard usePreferences={userPreferences} />;
+  return <Dashboard userPreferences={userPreferences} />;
 }
