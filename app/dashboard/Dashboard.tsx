@@ -86,7 +86,6 @@ export default function DashboardPage({
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Sparkles className="size-4" aria-hidden="true" />
               Newsletter
             </div>
 

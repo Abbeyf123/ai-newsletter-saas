@@ -41,7 +41,7 @@ export async function sendNewsletterEmail({
 
   return resend.emails.send({
     from: "onboarding@resend.dev",
-    to: email,
+    to: 'project2022os@gmail.com',
     subject: newsletter.subject,
     html,
   });

@@ -18,7 +18,7 @@ export default inngest.createFunction(
     cancelOn: [
       {
         event: "newsletter.schedule.deleted",
-        if: "async.data.userId === event.data.userId",
+        if: "async.data.userId == event.data.userId",
       },
     ],
   },
@@ -63,11 +63,11 @@ export default inngest.createFunction(
       ).values(),
     );
 
-    /*
-     * STEP 3
-     * Ask Gemini to select and summarize
-     * the strongest stories.
-     */
+    
+    //   STEP 3
+    //   Ask Gemini to select and summarize
+    //  the strongest stories.
+  
     const aiResponse = await step.ai.infer("summarize-news", {
       model: step.ai.models.gemini({
         model: "gemini-3.6-flash",
