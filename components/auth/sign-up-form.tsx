@@ -29,7 +29,7 @@ export function SignUpForm({
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
+    const supabase =  createClient();
     setIsLoading(true);
     setError(null);
 
@@ -40,13 +40,14 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data} = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
+      console.log('this is data', data)
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {

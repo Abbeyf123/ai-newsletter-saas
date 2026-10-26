@@ -1,109 +1,209 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# AI Newsletter SaaS
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
-
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+An email newsletter app that lets signed-in readers choose topics and a delivery
+frequency. Inngest coordinates each newsletter run: the app fetches recent
+articles, asks Gemini to select and summarize them, then sends the result with
+Resend.
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+- Supabase email/password authentication, including sign-up confirmation and
+  password recovery.
+- Newsletter preferences for AI, business, entertainment, health, science,
+  sports, and politics.
+- Weekly, biweekly, or monthly delivery preferences.
+- A dashboard to review preferences and pause or resume newsletter runs.
+- Scheduled processing with Inngest, article retrieval from NewsAPI, and
+  structured newsletter generation with Gemini.
 
-## Demo
+## How a newsletter run works
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+1. A signed-in user saves topic and frequency preferences. The preferences are
+   stored in Supabase's `user_preferences` table and a
+   `newsletter.schedule` event is sent to Inngest.
+2. The Inngest function checks whether the user's newsletter is active, then
+   requests up to five English articles per topic from NewsAPI's
+   `everything` endpoint, published within the previous seven days.
+3. Duplicate URLs are removed. Gemini generates a structured newsletter with a
+   subject, preview text, introduction, stories, and closing.
+4. Resend sends the newsletter. The function schedules another
+   `newsletter.schedule` event according to the saved frequency.
+5. Pausing a newsletter updates the Supabase row and sends
+   `newsletter.schedule.deleted` to cancel a matching scheduled run.
 
-## Deploy to Vercel
+The first event is sent immediately when preferences are saved or a newsletter
+is resumed. The selected frequency determines the next run after a successful
+send.
 
-Vercel deployment will guide you through creating a Supabase account and project.
+## Tech stack
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- Next.js App Router, React, and TypeScript
+- Supabase Auth and Postgres, using `@supabase/ssr`
+- Inngest for background work and scheduling
+- NewsAPI for source articles
+- Gemini (`gemini-3.6-flash`) for newsletter generation
+- Resend for email delivery
+- Tailwind CSS, Radix UI, and shadcn-style components
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+## Prerequisites
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+- Node.js compatible with the installed Next.js version
+- A Supabase project
+- API credentials for NewsAPI, Google Gemini, and Resend
+- An Inngest account for deployed scheduling; the Inngest Dev Server can be
+  used for local development
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## Local setup
 
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
+1. Install dependencies:
 
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   npm install
    ```
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+2. Create `.env.local` in the project root and set the credentials:
+
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+   NEWS_API_KEY=YOUR_NEWSAPI_KEY
+   GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+   RESEND_API_KEY=YOUR_RESEND_API_KEY
    ```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+   For a deployed Inngest environment, also configure `INNGEST_EVENT_KEY` and
+   `INNGEST_SIGNING_KEY` using the values from your Inngest environment.
+   Keep secret keys out of source control; `.env.local` is git-ignored.
 
-3. Use `cd` to change into the app's directory
+3. Create the Supabase table described below. Configure Supabase Auth's
+   site/redirect URLs for the app (locally, the site URL is usually
+   `http://localhost:3000`). The confirmation callback is
+   `/auth/confirm`.
 
-   ```bash
-   cd with-supabase-app
-   ```
-
-4. Rename `.env.example` to `.env.local` and update the following:
-
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
-
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
-
-5. You can now run the Next.js local development server:
+4. Start the Next.js app:
 
    ```bash
    npm run dev
    ```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+5. In a second terminal, run the Inngest Dev Server and connect it to the
+   local Next.js endpoint:
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+   ```bash
+   npx inngest-cli@latest dev
+   ```
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+   The Inngest handler is served at `/api/inngest`. Keep both processes running
+   to test newsletter events locally.
 
-## Feedback and issues
+6. Open [http://localhost:3000](http://localhost:3000). The root route sends
+   signed-out visitors to `/auth/login` and signed-in users to `/dashboard`.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+## Supabase data model
 
-## More Supabase examples
+The app reads and writes a `public.user_preferences` table. The following
+schema and policies support the signed-in user's preference form and dashboard:
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+| Column | Suggested type | Purpose |
+| --- | --- | --- |
+| `user_id` | `uuid` primary key, references `auth.users(id)` | One preference row per user |
+| `email` | `text` | Email saved with the preferences |
+| `categories` | `text[]` | Selected topic IDs |
+| `frequency` | `text` | `weekly`, `biweekly`, or `monthly` |
+| `is_active` | `boolean` | Whether future newsletter runs should proceed |
+| `created_at` | `timestamptz` | Row creation time; default to `now()` |
+
+Example SQL to run once in the Supabase SQL editor:
+
+```sql
+create table public.user_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  categories text[] not null,
+  frequency text not null
+    check (frequency in ('weekly', 'biweekly', 'monthly')),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+alter table public.user_preferences enable row level security;
+
+create policy "Users can read their own newsletter preferences"
+  on public.user_preferences for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "Users can create their own newsletter preferences"
+  on public.user_preferences for insert to authenticated
+  with check ((select auth.uid()) = user_id);
+
+create policy "Users can update their own newsletter preferences"
+  on public.user_preferences for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+```
+
+The Inngest worker also checks `is_active`. Ensure its server-side database
+access is authorized under your RLS setup; the user-scoped policies above do
+not grant it access. See the implementation notes below before deploying.
+
+## Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Redirects to the login page or dashboard, depending on authentication |
+| `/auth/login` | Sign in |
+| `/auth/sign-up` | Create an account |
+| `/auth/confirm` | Verify an email confirmation link |
+| `/auth/forgot-password` | Request a password reset |
+| `/auth/update-password` | Set a new password |
+| `/auth/error` | Show an authentication error |
+| `/dashboard` | View preferences and pause/resume delivery |
+| `/select` | Choose or update newsletter topics and frequency |
+| `/api/inngest` | Inngest function endpoint |
+
+## Project structure
+
+```text
+app/
+  api/inngest/             Inngest HTTP handler
+  auth/                    Sign-in, sign-up, and password routes
+  dashboard/               Preference summary and activation controls
+  select/                  Preference form and save action
+  subscribe/               Placeholder page
+components/
+  auth/                    Authentication forms and controls
+  custom/                  Shared navigation and theme switcher
+  ui/                      Reusable interface components
+context/                   Supabase auth context
+lib/
+  inngest/                  Inngest client and scheduled function
+  supabase/                 Browser, server, and proxy clients
+  utils/                    News, prompt, email, and data helpers
+types/                     Newsletter content types
+```
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the local Next.js development server |
+| `npm run build` | Build the production app |
+| `npm run start` | Serve the production build |
+| `npm run lint` | Run ESLint |
+
+## Current implementation notes
+
+- The email helper currently sends to a hard-coded recipient instead of the
+  `email` passed into it, and uses Resend's onboarding sender address. Configure
+  a verified sender and route messages to the intended subscriber before
+  enabling real delivery.
+- The Inngest function creates a Supabase server client and queries
+  `user_preferences` while running outside a user's browser request. With
+  row-level security enabled, that query needs a trusted server-side
+  authorization path; the current helper uses the publishable key and request
+  cookies. Do not solve this by exposing a service-role key to the browser.
+- The “biweekly” option is implemented as every 14 days. Monthly scheduling is
+  implemented as 30 days, and the next run is set to 09:00 in the server's
+  local timezone, not the subscriber's timezone.
+- `/subscribe` currently renders placeholder text and is not a working
+  subscription-management flow.
